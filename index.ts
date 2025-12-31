@@ -1,36 +1,40 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { $ } from "bun";
 
 // Initialize AI
-// Note: Ensure GOOGLE_API_KEY is set in your environment
 const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-    console.error("Error: GOOGLE_API_KEY or GEMINI_API_KEY not found in environment.");
+    console.error("❌ Error: GOOGLE_API_KEY or GEMINI_API_KEY not found in environment.");
     process.exit(1);
 }
 
-const client = new GoogleGenAI({ apiKey,  apiVersion: "v1alpha" });
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 async function getCommitMessage(diff: string) {
     try {
-        const response = await client.models.generateContent({
-            model: "gemini-2.0-flash-exp", // or your preferred model
-            contents: `Generate a concise, professional git commit message for the following changes. 
-            Output ONLY the commit message text, no quotes or prefix.
-            
-            Diff:
-            ${diff}`,
-        });
+        const prompt = `Generate a concise, professional git commit message for the following changes. 
+        Output ONLY the commit message text, no quotes or prefix.
+        
+        Diff:
+        ${diff}`;
 
-        const commitMessage = response.text;
-        if (!commitMessage) {
-              throw new Error("AI response did not contain text content.");
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        if (!text) {
+            throw new Error("AI response did not contain text content.");
         }
 
-        return commitMessage.trim();
-    } catch (error) {
-        console.error("AI Generation failed:", error);
+        return text.trim();
+    } catch (error: any) {
+        if (error.status === 429 || error.message?.includes("429")) {
+            console.error("❌ Quota Exceeded: You've reached the Gemini API free tier limit. Please wait a moment and try again.");
+        } else {
+            console.error("❌ AI Generation failed:", error.message || error);
+        }
         return null;
     }
 }
@@ -39,7 +43,7 @@ async function main() {
     const files = process.argv.slice(2);
     
     if (files.length === 0) {
-        console.log("Usage: bun run dev <file1> <file2> ...");
+        console.log("Usage: bun run bunny <file1> <file2> ...");
         process.exit(1);
     }
 
@@ -74,15 +78,13 @@ async function main() {
         await $`git add ${files}`;
         await $`git commit -m ${commitMessage}`;
         
-        // Optional: Ask for confirmation before pushing? 
-        // For now, let's just do it as requested.
         console.log("⬆️ Pushing to remote...");
         await $`git push`;
 
         console.log("✅ Successfully committed and pushed!");
 
     } catch (error) {
-        console.error("Process failed:", error);
+        console.error("❌ Process failed:", error);
     }
 }
 

@@ -6,7 +6,7 @@ import { $ } from "bun";
 const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-    console.error("❌ Error: GOOGLE_API_KEY or GEMINI_API_KEY not found in environment.");
+    console.error("Error: GOOGLE_API_KEY or GEMINI_API_KEY not found in environment.");
     process.exit(1);
 }
 
@@ -32,9 +32,9 @@ async function getCommitMessage(diff: string) {
         return text.trim();
     } catch (error: any) {
         if (error.status === 429 || error.message?.includes("429")) {
-            console.error("❌ Quota Exceeded: You've reached the Gemini API free tier limit. Please wait a moment and try again.");
+            console.error("Quota Exceeded: You've reached the Gemini API free tier limit. Please wait a moment and try again.");
         } else {
-            console.error("❌ AI Generation failed:", error.message || error);
+            console.error("AI Generation failed:", error.message || error);
         }
         return null;
     }
@@ -55,7 +55,7 @@ async function main() {
         const diff = await $`git diff HEAD ${files}`.text();
         
         if (!diff) {
-            console.log("✨ No changes detected in specified files.");
+            console.log("No changes detected in specified files.");
             // Check if they are already staged
             const stagedDiff = await $`git diff --staged ${files}`.text();
             if (!stagedDiff) {
@@ -63,7 +63,7 @@ async function main() {
             }
         }
 
-        console.log("🤖 Generating commit message...");
+        console.log("Generating commit message...");
         const commitMessage = await getCommitMessage(diff || await $`git diff --staged ${files}`.text());
 
         if (!commitMessage) {
@@ -71,21 +71,21 @@ async function main() {
             process.exit(1);
         }
 
-        console.log(`📝 Suggested Message: "${commitMessage}"`);
+        console.log(`Suggested Message: "${commitMessage}"`);
 
-        // Perform Git Actions
-        console.log("🚀 Performing git actions...");
+     
+        console.log("Performing git actions...");
         
         await $`git add ${files}`;
         await $`git commit -m ${commitMessage}`;
         
-        console.log("⬆️ Pushing to remote...");
+        console.log("Pushing to remote...");
         await $`git push`;
 
-        console.log("✅ Successfully committed and pushed!");
+        console.log("Successfully committed and pushed!");
 
     } catch (error) {
-        console.error("❌ Process failed:", error);
+        console.error("Process failed:", error);
     }
 }
 

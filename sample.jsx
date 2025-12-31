@@ -1,1 +1,1 @@
-<script src="https://gist.github.com/ashd19/616c11a30e52d58e812641cc8253179e.js"></script>
+console.log("Hello world")

@@ -1,7 +1,8 @@
+#!/usr/bin/env bun
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { $ } from "bun";
 
-// Initialize AI
+
 const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
@@ -43,11 +44,11 @@ async function main() {
     const files = process.argv.slice(2);
     
     if (files.length === 0) {
-        console.log("Usage: bun run bunny <file1> <file2> ...");
+        console.log("Usage: gitx <file1> <file2> ...");
         process.exit(1);
     }
 
-    console.log(`🔍 Checking changes for: ${files.join(", ")}...`);
+    console.log(`Checking changes for: ${files.join(", ")}...`);
 
     try {
         // Get the diff for specified files
